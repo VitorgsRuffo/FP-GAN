@@ -1,0 +1,15 @@
+/data/*
+
+venv/*
+
+*/__pycache__/*
+
+*/generated_data/*
+
+*/models/*
+
+/.python-version
+
+*/to-do-list
+
+*/test.py
