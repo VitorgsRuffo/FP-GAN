@@ -22,8 +22,11 @@ day = sys.argv[2]
 data_frame = pd.read_csv(day_file_path)
 data_frame = data_frame.sort_values('timestamp')
 
-features_names = ['bytes', 'packets', 'src_ip_entropy', 'src_port_entropy', 
-                  'dst_ip_entropy', 'dst_port_entropy']
+
+# features_names = ['bytes', 'packets', 'src_ip_entropy', 'src_port_entropy', 
+#                   'dst_ip_entropy', 'dst_port_entropy']
+
+features_names = ['bytes'] ##change 3
 
 titles = {
     'bytes': 'Total de bits',
@@ -46,7 +49,7 @@ figure, plots = plt.subplots(3, 2, figsize=(10.80,7.20))
 
 lin_space = np.linspace(0, 24, data_frame.shape[0])
 
-for k in range(0, 6):
+for k in range(0, 1):
     i = k // 2 # mapping array index to matrix indices. (obs: 2 == matrix line length)
     j = k % 2
     features = np.array(data_frame[features_names[k]])

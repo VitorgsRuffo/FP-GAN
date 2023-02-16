@@ -11,17 +11,13 @@ from tensorflow.keras.layers import Dense, LeakyReLU, Dropout
 
 def build_generator(latent_space_dim):
     model = Sequential()
-    model.add(Dense(256, input_dim=latent_space_dim))
+    model.add(Dense(64, input_dim=latent_space_dim))
     model.add(LeakyReLU(0.2))
     #model.add(Dropout(0.2))
-    model.add(Dense(128))
-    model.add(LeakyReLU(0.2))
-    model.add(Dense(128))
-    model.add(LeakyReLU(0.2))
     model.add(Dense(32))
     model.add(LeakyReLU(0.2))
     #model.add(Dropout(0.2))
-    model.add(Dense(7, activation='tanh'))
+    model.add(Dense(2, activation='tanh'))
     #model.add(Dense(7, activation='sigmoid'))
     #model.add(Dense(7))
     return model
@@ -29,20 +25,18 @@ def build_generator(latent_space_dim):
 
 def build_discriminator():
     model = Sequential()
-    model.add(Dense(256, input_dim=7))
-    model.add(LeakyReLU(0.2))
-    model.add(Dropout(0.2))
-    model.add(Dense(256))
-    model.add(LeakyReLU(0.2))
-    model.add(Dropout(0.2))
-    model.add(Dense(128))
+    model.add(Dense(128, input_dim=2))
     model.add(LeakyReLU(0.2))
     model.add(Dropout(0.2))
     model.add(Dense(64))
     model.add(LeakyReLU(0.2))
     model.add(Dropout(0.2))
+    model.add(Dense(32))
+    model.add(LeakyReLU(0.2))
+    model.add(Dropout(0.2))
     model.add(Dense(1, activation='sigmoid'))
     return model
+
 
 
 
@@ -52,7 +46,6 @@ generator.summary()
 
 discriminator = build_discriminator()
 discriminator.summary()
-
 
 
 # step 2: setting up training. (We'll redefine the fit method for making a custom training loop for GANs.)
@@ -105,9 +98,9 @@ class OrionGAN(Model):
             y_realfake = tf.concat([tf.ones_like(yhat_real), tf.zeros_like(yhat_fake)], axis=0)
             
             # Add some noise to the TRUE outputs (in order to difficult discriminator learning)
-            noise_real = -0.15*tf.random.uniform(tf.shape(yhat_real))
-            noise_fake = 0.15*tf.random.uniform(tf.shape(yhat_fake))
-            y_realfake += tf.concat([noise_real, noise_fake], axis=0)
+            # noise_real = -0.15*tf.random.uniform(tf.shape(yhat_real))
+            # noise_fake = 0.15*tf.random.uniform(tf.shape(yhat_fake))
+            # y_realfake += tf.concat([noise_real, noise_fake], axis=0)
             
             # Calculate loss - BINARYCROSS 
             total_d_loss = self.d_loss(y_realfake, yhat_realfake)
@@ -135,8 +128,8 @@ class OrionGAN(Model):
         return {"d_loss":total_d_loss, "g_loss":total_g_loss}
 
 
-g_opt = Adam(learning_rate=0.0001)
-d_opt = Adam(learning_rate=0.00001)
+g_opt = Adam(learning_rate=0.001)
+d_opt = Adam(learning_rate=0.001)
 # g_opt = Adam(learning_rate=0.001)
 # d_opt = Adam(learning_rate=0.001)
 #g_opt = Adam(learning_rate=0.0001)
@@ -144,7 +137,7 @@ d_opt = Adam(learning_rate=0.00001)
 g_loss = BinaryCrossentropy()
 d_loss = BinaryCrossentropy()
 batch_size = 256
-epochs = 500
+epochs = 150
 
 gan = OrionGAN(generator, discriminator)
 gan.compile(g_opt, d_opt, g_loss, d_loss, batch_size, latent_space_dim)
@@ -205,31 +198,29 @@ plt.close()
 generator.save('./model/generator.h5')
 discriminator.save('./model/discriminator.h5')
 
+
+
+
 # step 5: check learned distribution:
 
 #generator = load_model('./model/generator.h5', compile=False)
 
-
-amount_of_samples_to_generate = 864000 #it will generate 10x the amount-of-seconds-in-a-day samples
+amount_of_samples_to_generate = 86400 #it will generate amount-of-seconds-in-a-day samples
 
 latent_space = tf.random.normal((amount_of_samples_to_generate, latent_space_dim)) 
 generated_regular_day = generator(latent_space, training=False) 
-
-
-
 generated_regular_day = scaler.inverse_transform(generated_regular_day) #scaling data to original range
 
-
 columns = \
-    ["timestamp", "bytes", "dst_ip_entropy",  "dst_port_entropy", "src_ip_entropy", "src_port_entropy", "packets"]
-
+    ["timestamp", "bytes"] ##change 1
 
 data_frame = pd.DataFrame(generated_regular_day, columns=columns, index=None)
+
+
+
 data_frame = data_frame.round({"timestamp":0}) #making sure the column values are integers.
-
-
 # for each timestamp select one random sample (totalling 86400 samples)
-data_frame = data_frame.groupby('timestamp', group_keys=False).apply(lambda x: x.sample(1))
+#data_frame = data_frame.groupby('timestamp', group_keys=False).apply(lambda x: x.sample(1))
 
 
 

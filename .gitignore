@@ -10,6 +10,12 @@ venv/*
 
 /.python-version
 
-*/to-do-list
+/to-do-list
 
 */test.py
+
+*.csv
+
+*.jpg
+
+/insights
