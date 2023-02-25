@@ -18,4 +18,10 @@ venv/*
 
 *.jpg
 
+*.png
+
+*.pkl
+
 /insights
+
+*.txt
