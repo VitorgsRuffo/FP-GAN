@@ -6,11 +6,10 @@ from sklearn.preprocessing import MinMaxScaler
 from pickle import dump, load
 
 
-def import_gan_training_data(dataset='orion'):
+def import_orion_normal_data():
 
-    if dataset == 'orion':
-        filename = r'../data/orion/'
-        regular_day = np.array(pd.read_csv(filename+'051218_preprocessed.csv'))
+    filename = r'../data/orion/'
+    regular_day = np.array(pd.read_csv(filename+'051218_preprocessed.csv'))
 
     #adding timestamp to data...
     #( timestamp,bytes,dst_ip_entropy,dst_port_entropy,src_ip_entropy,src_port_entropy,packets,label )
@@ -33,12 +32,11 @@ def import_gan_training_data(dataset='orion'):
     return regular_day, scaler
 
 
-def import_gan_training_windowed_data(dataset='orion', network_type='dnn', window_size=5):
+def import_orion_normal_windowed_data(network_type='dnn', window_size=5):
 
-    if dataset == 'orion':
-        filename = r'../data/orion/'
-        regular_day = np.array(pd.read_csv(filename+'051218_preprocessed.csv'))
-        
+    filename = r'../data/orion/'
+    regular_day = np.array(pd.read_csv(filename+'051218_preprocessed.csv'))
+    
     #adding timestamp to data...
     #( timestamp,bytes,dst_ip_entropy,dst_port_entropy,src_ip_entropy,src_port_entropy,packets,label )
     #this will hopefully help GAN generator understand how the 6 features are distribuited through time.
@@ -79,15 +77,31 @@ def import_gan_training_windowed_data(dataset='orion', network_type='dnn', windo
 #_, _ = import_gan_training_data()
 
 
-def import_gan_testing_data(dataset='orion', portscan=False):
 
-    if dataset == 'orion':
-     filename = r'../data/orion/'
-     anomalous_day_1 = np.array(pd.read_csv(filename+'051218_portscan_preprocessed.csv'))
-     anomalous_day_2 = np.array(pd.read_csv(filename+'171218_portscan_ddos_preprocessed.csv'))
 
-    labels_1 = anomalous_day_1[:, 6]
-    labels_2 = anomalous_day_2[:, 6]
+
+
+
+
+
+
+
+
+
+
+
+
+def import_orion_anomalous_data(day=1, portscan=False):
+
+    filename = r'../data/orion/'
+    anomalous_day = None
+    if day == 1:
+        anomalous_day = np.array(pd.read_csv(filename+'051218_ddos_portscan_preprocessed.csv'))
+    
+    else:
+        anomalous_day = np.array(pd.read_csv(filename+'171218_portscan_ddos_preprocessed.csv'))
+
+    labels = anomalous_day[:, 6]
 
 
     #adding timestamp to data...
@@ -95,40 +109,53 @@ def import_gan_testing_data(dataset='orion', portscan=False):
     timestamp = [i for i in range(0,86400)]
     timestamp = np.array(timestamp)
     timestamp = np.reshape(timestamp, (86400, 1))
-    anomalous_day_1 = np.concatenate((timestamp, anomalous_day_1), axis=1)
-    anomalous_day_2 = np.concatenate((timestamp, anomalous_day_2), axis=1)
+    anomalous_day = np.concatenate((timestamp, anomalous_day), axis=1)
 
 
     #scaling data...
-    _file = open('normal_data_scaler.pkl', 'rb')
+    try:
+        _file = open('normal_data_scaler.pkl', 'rb')
+    except:
+        return None, None
     scaler = load(_file) 
-    anomalous_day_1 = scaler.transform(anomalous_day_1[:, 0:7])
-    anomalous_day_2 = scaler.transform(anomalous_day_2[:, 0:7])
+    anomalous_day = scaler.transform(anomalous_day[:, 0:7])
 
 
     if not portscan:
-        # 1st interval (ddos): 36900-41400  
-        # 2nd interval (portscan): 48300-52500
-        anomalous_day_1 = np.concatenate((anomalous_day_1[0:48300, :], anomalous_day_1[52501:, :]), axis=0)
-        labels_1 = np.concatenate((labels_1[0:48300], labels_1[52501:]), axis=0)
-
-
-        # 1st interval (portscan): 35100-40200
-        # 2nd interval (ddos): 63420-68100
-        anomalous_day_2 = np.concatenate((anomalous_day_2[0:35100, :], anomalous_day_2[40201:, :]), axis=0)
-        labels_2 = np.concatenate((labels_2[0:35100], labels_2[40201:]), axis=0)
+        if day == 1:
+            # 1st interval (ddos): 36900-41400  
+            # 2nd interval (portscan): 48300-52500
+            anomalous_day = np.concatenate((anomalous_day[0:48300, :], anomalous_day[52501:, :]), axis=0)
+            labels = np.concatenate((labels[0:48300], labels[52501:]), axis=0)
+        else:
+            # 1st interval (portscan): 35100-40200
+            # 2nd interval (ddos): 63420-68100
+            anomalous_day = np.concatenate((anomalous_day[0:35100, :], anomalous_day[40201:, :]), axis=0)
+            labels = np.concatenate((labels[0:35100], labels[40201:]), axis=0)
 
     #returning data...
-    return anomalous_day_1, labels_1, anomalous_day_2, labels_2
+    return anomalous_day, labels
 
 
 
-def import_gan_testing_windowed_data(dataset='orion', network_type='dnn', window_size=5):
 
-    if dataset == 'orion':
-        filename = r'../data/orion/'
-        anomalous_day_1 = np.array(pd.read_csv(filename+'051218_portscan_preprocessed.csv'))
-        anomalous_day_2 = np.array(pd.read_csv(filename+'171218_portscan_ddos_preprocessed.csv'))
+
+
+
+
+
+
+
+
+
+
+
+def import_orion_anomalous_windowed_data(network_type='dnn', window_size=5):
+
+    
+    filename = r'../data/orion/'
+    anomalous_day_1 = np.array(pd.read_csv(filename+'051218_ddos_portscan_preprocessed.csv'))
+    anomalous_day_2 = np.array(pd.read_csv(filename+'171218_portscan_ddos_preprocessed.csv'))
 
     labels_1 = anomalous_day_1[:, 6]
     labels_2 = anomalous_day_2[:, 6]

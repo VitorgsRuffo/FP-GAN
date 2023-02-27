@@ -183,25 +183,25 @@ from tensorflow.keras.callbacks import Callback
 
 
 ###########################
-# step 3: training
-# hist = gan.fit(regular_day, batch_size=batch_size, epochs=epochs)
-# #hist = gan.fit(regular_day, batch_size=batch_size, epochs=epochs, callbacks=[GanMonitor(latent_space_dim, scaler)])
+# step 3: training GAN.
+hist = gan.fit(regular_day, batch_size=batch_size, epochs=epochs)
+#hist = gan.fit(regular_day, batch_size=batch_size, epochs=epochs, callbacks=[GanMonitor(latent_space_dim, scaler)])
 
-# plt.suptitle('Loss')
-# plt.plot(hist.history['d_loss'], label='d_loss')
-# plt.plot(hist.history['g_loss'], label='g_loss')
-# plt.legend()
-# plt.savefig(f"./loss.png", dpi=150)
-# plt.close()
+plt.suptitle('Loss')
+plt.plot(hist.history['d_loss'], label='d_loss')
+plt.plot(hist.history['g_loss'], label='g_loss')
+plt.legend()
+plt.savefig(f"./gan_loss.png", dpi=150)
+plt.close()
 
 
 # step 4: save models
 # generator.save('./model/generator.h5')
-# discriminator.save('./model/discriminator.h5')
+discriminator.save('./model/discriminator.h5')
 
 # step 5: check learned distribution:
 
-generator = load_model('./model/generator.h5', compile=False)
+# generator = load_model('./model/generator.h5', compile=False)
 
 
 amount_of_samples_to_generate = 86400 #it will generate 10x the amount-of-seconds-in-a-day samples
