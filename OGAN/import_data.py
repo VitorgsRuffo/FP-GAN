@@ -19,14 +19,17 @@ def import_orion_normal_data():
     timestamp = np.reshape(timestamp, (86400, 1))
     regular_day = np.concatenate((timestamp, regular_day), axis=1)
 
+    
     #scaling data...
-    scaler = MinMaxScaler((-1, 1)).fit(regular_day[:, 0:7])
-    regular_day = scaler.transform(regular_day[:, 0:7])
+    scaler = MinMaxScaler((-1, 1)).fit(regular_day[:, 0:7]) 
+    regular_day = scaler.transform(regular_day[:, 0:7]) 
 
     #saving scaler to disk so that it can be later used for scaling testing data...
     _file = open('normal_data_scaler.pkl', 'wb')
     dump(scaler, _file)
     _file.close()
+
+    regular_day = np.reshape(regular_day, (regular_day.shape[0], 1, regular_day.shape[1])) ## DCGAN change
 
     #returning data...
     return regular_day, scaler
@@ -132,6 +135,9 @@ def import_orion_anomalous_data(day=1, portscan=False):
             # 2nd interval (ddos): 63420-68100
             anomalous_day = np.concatenate((anomalous_day[0:35100, :], anomalous_day[40201:, :]), axis=0)
             labels = np.concatenate((labels[0:35100], labels[40201:]), axis=0)
+
+
+    anomalous_day = np.reshape(anomalous_day, (anomalous_day.shape[0], 1, anomalous_day.shape[1])) ## DCGAN change
 
     #returning data...
     return anomalous_day, labels

@@ -1,44 +1,87 @@
-from import_data import import_gan_training_data
+from import_data import import_orion_normal_data
 
 
 # step 0: import data
-regular_day, scaler = import_gan_training_data('orion')
+regular_day, scaler = import_orion_normal_data()
 
 
 # step 1: build the generator and discriminator models.
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, LeakyReLU, Dropout, GRU
+from tensorflow.keras.layers import Dense, Conv1D, Flatten, LeakyReLU, Dropout, BatchNormalization
 from tensorflow.keras import initializers, Input
 import tensorflow as tf
 
 
 # vanilla DNN
+# def build_generator(latent_space_dim):
+#     model = Sequential()
+#     model.add(Dense(32, input_dim=latent_space_dim))
+#     model.add(LeakyReLU(0.2))
+#     #model.add(Dropout(0.2))
+#     model.add(Dense(32))
+#     model.add(LeakyReLU(0.2))
+#     #model.add(Dropout(0.2))
+#     model.add(Dense(7, activation='tanh'))
+#     #model.add(Dense(7, activation='sigmoid'))
+#     #model.add(Dense(7))
+#     return model
+
+
+# def build_discriminator():
+#     model = Sequential()
+#     model.add(Dense(64, input_dim=7))
+#     model.add(LeakyReLU(0.2))
+#     model.add(Dropout(0.2))
+#     model.add(Dense(64))
+#     model.add(LeakyReLU(0.2))
+#     model.add(Dropout(0.2))
+#     model.add(Dense(64))
+#     model.add(LeakyReLU(0.2))
+#     model.add(Dropout(0.2))
+#     model.add(Dense(1, activation='sigmoid'))
+#     return model
+
+
+# Deep Convolutional GAN.
 def build_generator(latent_space_dim):
     model = Sequential()
-    model.add(Dense(32, input_dim=latent_space_dim))
-    model.add(LeakyReLU(0.2))
-    #model.add(Dropout(0.2))
-    model.add(Dense(32))
-    model.add(LeakyReLU(0.2))
-    #model.add(Dropout(0.2))
-    model.add(Dense(7, activation='tanh'))
-    #model.add(Dense(7, activation='sigmoid'))
-    #model.add(Dense(7))
+    
+    model.add(Conv1D(32, kernel_size=1, input_shape=(1, latent_space_dim)))
+    model.add(BatchNormalization())
+    model.add(LeakyReLU())
+    #print(model.output_shape)
+
+    model.add(Conv1D(16, kernel_size=1))
+    model.add(BatchNormalization())
+    model.add(LeakyReLU())
+    #print(model.output_shape)
+
+    model.add(Conv1D(7, kernel_size=1, activation='tanh'))
+    #print(model.output_shape)
+
+    #print(model.summary())
+
     return model
 
 
 def build_discriminator():
     model = Sequential()
-    model.add(Dense(64, input_dim=7))
-    model.add(LeakyReLU(0.2))
-    model.add(Dropout(0.2))
-    model.add(Dense(64))
-    model.add(LeakyReLU(0.2))
-    model.add(Dropout(0.2))
-    model.add(Dense(64))
-    model.add(LeakyReLU(0.2))
-    model.add(Dropout(0.2))
+
+    model.add(Conv1D(64, kernel_size=1, input_shape=(1, 7)))
+    model.add(LeakyReLU())
+    model.add(Dropout(0.3))
+    #print(model.output_shape)
+
+    model.add(Conv1D(64, kernel_size=1))
+    model.add(LeakyReLU())
+    model.add(Dropout(0.3))
+    #print(model.output_shape)
+
+    model.add(Flatten())
     model.add(Dense(1, activation='sigmoid'))
+
+    #print(model.summary())
+
     return model
 
 
@@ -84,7 +127,10 @@ class OrionGAN(Model):
 
     def train_step(self, batch): #called inside fit method.
         real_data = batch
+
         latent_space = tf.random.normal((self.batch_size, self.latent_space_dim))
+        latent_space = tf.reshape(latent_space, [self.batch_size, 1, self.latent_space_dim]) ## DCGAN change
+
         fake_data = self.generator(latent_space, training=False)
         
         # Train the discriminator
@@ -114,6 +160,8 @@ class OrionGAN(Model):
         with tf.GradientTape() as g_tape: 
             # Generate some new data
             latent_space = tf.random.normal((self.batch_size, self.latent_space_dim))
+            latent_space = tf.reshape(latent_space, [self.batch_size, 1, self.latent_space_dim]) ## DCGAN change
+
             fake_data = self.generator(latent_space, training=True)
 
             # Create the predicted labels
@@ -195,19 +243,22 @@ plt.savefig(f"./gan_loss.png", dpi=150)
 plt.close()
 
 
-# step 4: save models
-# generator.save('./model/generator.h5')
+# # step 4: save models
+generator.save('./model/generator.h5')
 discriminator.save('./model/discriminator.h5')
 
 # step 5: check learned distribution:
 
-# generator = load_model('./model/generator.h5', compile=False)
+#generator = load_model('./model/generator.h5', compile=False)
 
 
 amount_of_samples_to_generate = 86400 #it will generate 10x the amount-of-seconds-in-a-day samples
 
 latent_space = tf.random.normal((amount_of_samples_to_generate, latent_space_dim)) 
+latent_space = tf.reshape(latent_space, [amount_of_samples_to_generate, 1, latent_space_dim]) ##
+
 generated_regular_day = generator(latent_space, training=False) 
+generated_regular_day = np.reshape(generated_regular_day, (generated_regular_day.shape[0], generated_regular_day.shape[2]))
 generated_regular_day = scaler.inverse_transform(generated_regular_day) #scaling data to original range
 
 
