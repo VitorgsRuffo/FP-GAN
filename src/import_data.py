@@ -29,7 +29,6 @@ def import_orion_normal_data():
     dump(scaler, _file)
     _file.close()
 
-    regular_day = np.reshape(regular_day, (regular_day.shape[0], 1, regular_day.shape[1])) ## DCGAN change
 
     #returning data...
     return regular_day, scaler
@@ -136,8 +135,6 @@ def import_orion_anomalous_data(day=1, portscan=False):
             anomalous_day = np.concatenate((anomalous_day[0:35100, :], anomalous_day[40201:, :]), axis=0)
             labels = np.concatenate((labels[0:35100], labels[40201:]), axis=0)
 
-
-    anomalous_day = np.reshape(anomalous_day, (anomalous_day.shape[0], 1, anomalous_day.shape[1])) ## DCGAN change
 
     #returning data...
     return anomalous_day, labels

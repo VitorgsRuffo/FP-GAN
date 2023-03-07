@@ -12,6 +12,8 @@ venv/*
 
 /to-do-list
 
+/legacy/6-OGAN/models/*
+
 */test.py
 
 *.csv

@@ -1,0 +1,10 @@
+ - GRU-GAN (window: 5 - one model)
+    - Could not print learned distribution yet.                    
+    - terrible results. working on it.
+       - hyperparameters:
+         - change latent space dimension.
+         - change latent space distribution (from normal to uniform)
+         - resize window.  
+       - gan heuristics.
+    - Loss always stabilize in 0.68;
+    - discriminator predictions are mostly in [0.48, 0.54] interval.
