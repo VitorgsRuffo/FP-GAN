@@ -1,8 +1,9 @@
-from import_data import import_orion_normal_data
+from import_data import import_orion_normal_data, import_cic_normal_data
 
 
 # step 0: import data
-regular_day, scaler = import_orion_normal_data()
+#regular_day, scaler = import_orion_normal_data()
+regular_day, scaler = import_cic_normal_data()
 
 
 # step 1: build the generator and discriminator models.
@@ -69,7 +70,7 @@ def build_discriminator():
 
 
 
-batch_size = 256
+batch_size = 32
 latent_space_dim = 128
 
 generator = build_generator(latent_space_dim)
@@ -168,7 +169,7 @@ d_opt = Adam(learning_rate=0.00002)
 #d_opt = Adam(learning_rate=0.00001) #generator is gonna learning faster than discriminator cause its task is harder
 g_loss = BinaryCrossentropy()
 d_loss = BinaryCrossentropy()
-epochs = 150
+epochs = 100
 
 gan = OrionGAN(generator, discriminator)
 gan.compile(g_opt, d_opt, g_loss, d_loss, batch_size, latent_space_dim)
@@ -234,7 +235,8 @@ discriminator.save('./model/discriminator.h5')
 #generator = load_model('./model/generator.h5', compile=False)
 
 
-amount_of_samples_to_generate = 86400 #it will generate 10x the amount-of-seconds-in-a-day samples
+#amount_of_samples_to_generate = 86400 #it will generate the amount-of-seconds-in-a-day samples
+amount_of_samples_to_generate = 3718 #it will generate the amount-of-seconds-in-a-day samples
 
 latent_space = tf.random.normal((amount_of_samples_to_generate, latent_space_dim)) 
 generated_regular_day = generator(latent_space, training=False) 

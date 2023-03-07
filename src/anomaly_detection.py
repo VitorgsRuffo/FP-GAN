@@ -1,4 +1,4 @@
-from import_data import import_orion_anomalous_data
+from import_data import import_orion_anomalous_data, import_cic_anomalous_data
 from tensorflow.keras.models import load_model
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import f1_score
@@ -13,7 +13,8 @@ from pickle import load
 
 
 # step 0: import data
-anomalous_day, labels = import_orion_anomalous_data(2, False)
+#anomalous_day, labels = import_orion_anomalous_data(2, False)
+anomalous_day, labels = import_cic_anomalous_data(2)
 
 
 # step 1: load trained discriminator

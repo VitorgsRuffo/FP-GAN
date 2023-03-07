@@ -1,5 +1,6 @@
 ### Calculate best threshold for discriminating normal traffic from anomalous one.
 from import_data import import_orion_anomalous_data, import_orion_normal_data
+from import_data import import_cic_anomalous_data, import_cic_normal_data
 import numpy as np
 from tensorflow.keras.models import load_model
 from sklearn import metrics
@@ -15,14 +16,17 @@ from sklearn.metrics import matthews_corrcoef
 
 
 # Step 0: import traffic data and trained discriminator
-normal_day, scaler = import_orion_normal_data()
-anomalous_day, labels = import_orion_anomalous_data(1, False)
+# normal_day, scaler = import_orion_normal_data()
+# anomalous_day, labels = import_orion_anomalous_data(1, False)
+normal_day, scaler = import_cic_normal_data()
+anomalous_day, labels = import_cic_anomalous_data(1)
 discriminator = load_model('./model/discriminator.h5', compile=False)
 
 
 # Step 1: calculate normal data predictions mean
 predictions = discriminator.predict(normal_day)
 normal_mean = np.mean(predictions, dtype = np.float64, axis=0)
+
 
 
 # Step 2: predict anomalous data discriminating score
@@ -70,10 +74,6 @@ from pickle import dump
 _file = open('threshold.pkl', 'wb')
 dump(threshold, _file)
 _file.close()
-
-
-
-
 
 
 
