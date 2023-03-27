@@ -2,11 +2,14 @@
 
 venv/*
 
+/sum\ up/
+
 */__pycache__/*
 
 */generated_data/*
 
 */models/*
+*/model/*
 
 /.python-version
 
@@ -15,6 +18,8 @@ venv/*
 /legacy/6-OGAN/models/*
 
 */test.py
+
+*/test2.py
 
 *.csv
 

@@ -6,53 +6,66 @@ from sklearn.preprocessing import MinMaxScaler
 from pickle import dump, load
 
 
-def import_orion_normal_data():
+def import_orion_normal_data(dataset=1):
+    regular_day = None
+    if dataset == 1:
+        regular_day = np.array(pd.read_csv('../data/orion/o1_access_2020_gustavo/051218_60h6sw_c1_ht5_it0_V2_csv/051218.csv'))
+    else:
+        regular_day = np.array(pd.read_csv('../data/orion/o2_globecom_2022/071218_140h6sw_c1_ht5_it0_V2_csv/071218.csv'))
 
-    filename = r'../data/orion/'
-    regular_day = np.array(pd.read_csv(filename+'051218_preprocessed.csv'))
 
-    #adding timestamp to data...
-    #( timestamp,bytes,dst_ip_entropy,dst_port_entropy,src_ip_entropy,src_port_entropy,packets,label )
+    #adding timestamp to data... ###change1
+    #( timestamp,bits,dst_ip_entropy,dst_port_entropy,src_ip_entropy,src_port_entropy,packets,label )
     #this will hopefully help GAN generator understand how the 6 features are distribuited through time.
-    timestamp = [i for i in range(0,86400)]
-    timestamp = np.array(timestamp)
-    timestamp = np.reshape(timestamp, (86400, 1))
-    regular_day = np.concatenate((timestamp, regular_day), axis=1)
+    # timestamp = [i for i in range(0,86400)]
+    # timestamp = np.array(timestamp)
+    # timestamp = np.reshape(timestamp, (86400, 1))
+    # regular_day = np.concatenate((timestamp, regular_day), axis=1)
 
     
-    #scaling data...
-    scaler = MinMaxScaler((-1, 1)).fit(regular_day[:, 0:7]) 
-    regular_day = scaler.transform(regular_day[:, 0:7]) 
+    #scaling data... ###change2
+    scaler = MinMaxScaler((-1, 1)).fit(regular_day[:, 0:6]) 
+    regular_day = scaler.transform(regular_day[:, 0:6]) 
+
 
     #saving scaler to disk so that it can be later used for scaling testing data...
     _file = open('normal_data_scaler.pkl', 'wb')
     dump(scaler, _file)
     _file.close()
 
-
     #returning data...
     return regular_day, scaler
 
+#_, _ = import_orion_normal_data(dataset=1)
 
-def import_orion_anomalous_data(day=1, portscan=False):
 
-    filename = r'../data/orion/'
+
+
+def import_orion_anomalous_data(dataset=1, day=1, portscan=False):
     anomalous_day = None
-    if day == 1:
-        anomalous_day = np.array(pd.read_csv(filename+'051218_ddos_portscan_preprocessed.csv'))
-    
-    else:
-        anomalous_day = np.array(pd.read_csv(filename+'171218_portscan_ddos_preprocessed.csv'))
+    if dataset == 1: #access 2020
+        if day == 1:
+            anomalous_day = np.array(pd.read_csv('../data/orion/o1_access_2020_gustavo/051218_60h6sw_c1_ht5_it0_V2_csv_ddos_portscan/051218_ddos_portscan.csv'))
+        else:
+            anomalous_day = np.array(pd.read_csv('../data/orion/o1_access_2020_gustavo/171218_60h6sw_c1_ht5_it0_V2_csv_portscan_ddos/171218_portscan_ddos.csv'))
+       
+    else: #globecom 2022
+        if day == 1:
+            anomalous_day = np.array(pd.read_csv('../data/orion/o2_globecom_2022/071218_140h6sw_c1_ht5_it0_V2_csv_ddos_portscan/071218_ddos_portscan.csv'))
+        else:
+            anomalous_day = np.array(pd.read_csv('../data/orion/o2_globecom_2022/071218_140h6sw_c1_ht5_it0_V2_csv_portscan_ddos/071218_portscan_ddos.csv'))
 
+
+    
     labels = anomalous_day[:, 6]
 
 
-    #adding timestamp to data...
-    #( timestamp,bytes,dst_ip_entropy,dst_port_entropy,src_ip_entropy,src_port_entropy,packets,label )
-    timestamp = [i for i in range(0,86400)]
-    timestamp = np.array(timestamp)
-    timestamp = np.reshape(timestamp, (86400, 1))
-    anomalous_day = np.concatenate((timestamp, anomalous_day), axis=1)
+    #adding timestamp to data... ###change1
+    #( timestamp,bits,dst_ip_entropy,dst_port_entropy,src_ip_entropy,src_port_entropy,packets,label )
+    # timestamp = [i for i in range(0,86400)]
+    # timestamp = np.array(timestamp)
+    # timestamp = np.reshape(timestamp, (86400, 1))
+    # anomalous_day = np.concatenate((timestamp, anomalous_day), axis=1)
 
 
     #scaling data...
@@ -61,25 +74,38 @@ def import_orion_anomalous_data(day=1, portscan=False):
     except:
         return None, None
     scaler = load(_file) 
-    anomalous_day = scaler.transform(anomalous_day[:, 0:7])
+    anomalous_day = scaler.transform(anomalous_day[:, 0:6]) ###change2
 
 
     if not portscan:
-        if day == 1:
-            # 1st interval (ddos): 36900-41400  
-            # 2nd interval (portscan): 48300-52500
-            anomalous_day = np.concatenate((anomalous_day[0:48300, :], anomalous_day[52501:, :]), axis=0)
-            labels = np.concatenate((labels[0:48300], labels[52501:]), axis=0)
-        else:
-            # 1st interval (portscan): 35100-40200
-            # 2nd interval (ddos): 63420-68100
-            anomalous_day = np.concatenate((anomalous_day[0:35100, :], anomalous_day[40201:, :]), axis=0)
-            labels = np.concatenate((labels[0:35100], labels[40201:]), axis=0)
+        if dataset == 1:  #access 2020
+            if day == 1:
+                # 1st interval (ddos): 36900-41400  
+                normal_day, scaler = import_orion_normal_data(dataset=1)
+                # 2nd interval (portscan): 48300-52500
+                anomalous_day = np.concatenate((anomalous_day[0:48300, :], anomalous_day[52501:, :]), axis=0)
+                labels = np.concatenate((labels[0:48300], labels[52501:]), axis=0)
+            else:
+                # 1st interval (portscan): 35100-40200
+                # 2nd interval (ddos): 63420-68100
+                anomalous_day = np.concatenate((anomalous_day[0:35100, :], anomalous_day[40201:, :]), axis=0)
+                labels = np.concatenate((labels[0:35100], labels[40201:]), axis=0)
+        
+        else:  #globecom 2022
+            if day == 1:
+                # 1st interval (ddos): 33300-37800
+                # 2nd interval (portscan): 49500-53400
+                anomalous_day = np.concatenate((anomalous_day[0:49500, :], anomalous_day[53401:, :]), axis=0)
+                labels = np.concatenate((labels[0:49500], labels[53401:]), axis=0)
+            else:
+                # 1st interval (portscan): 40800-45600
+                # 2nd interval (ddos): 59700-64200
+                anomalous_day = np.concatenate((anomalous_day[0:40800, :], anomalous_day[45601:, :]), axis=0)
+                labels = np.concatenate((labels[0:40800], labels[45601:]), axis=0)
 
 
     #returning data...
     return anomalous_day, labels
-
 
 
 
@@ -97,9 +123,10 @@ def import_cic_normal_data():
     regular_day = np.concatenate((timestamp, regular_day), axis=1)
 
 
+
     #revoming seconds with no traffic...
-    regular_day = pd.DataFrame(regular_day, columns = ['timestamp','bytes','dst_ip_entropy','dst_port_entropy','src_ip_entropy','src_port_entropy','packets','label'])
-    regular_day = regular_day.drop_duplicates(subset=['bytes','dst_ip_entropy','dst_port_entropy','src_ip_entropy','src_port_entropy','packets'], keep=False)
+    regular_day = pd.DataFrame(regular_day, columns = ['timestamp','bits','dst_ip_entropy','dst_port_entropy','src_ip_entropy','src_port_entropy','packets','label'])
+    regular_day = regular_day.drop_duplicates(subset=['bits','dst_ip_entropy','dst_port_entropy','src_ip_entropy','src_port_entropy','packets'], keep=False)
     regular_day = np.array(regular_day)
     
 
@@ -116,7 +143,7 @@ def import_cic_normal_data():
     #returning data...
     return regular_day, scaler
 
-_, _ = import_cic_normal_data()
+#_, _ = import_cic_normal_data()
 
 
 

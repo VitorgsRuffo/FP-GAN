@@ -1,49 +1,66 @@
+import sys
+
+if len(sys.argv) <= 1:
+    print("Please.\nSpecify the dataset:\n\t(orion1 | orion2)\n\tcic\n")
+    quit(1)
+dataset = sys.argv[1]
+
+
 from import_data import import_orion_normal_data, import_cic_normal_data
 
-
 # step 0: import data
-#regular_day, scaler = import_orion_normal_data()
-regular_day, scaler = import_cic_normal_data()
+if dataset == 'orion1':
+    normal_day, scaler = import_orion_normal_data(dataset=1)
+
+elif dataset == 'orion2':
+    normal_day, scaler = import_orion_normal_data(dataset=2)
+
+else:
+    normal_day, scaler = import_cic_normal_data()
+
+
+
+#setting random state for reproducible results.
+from tensorflow.keras.utils import set_random_seed
+#set_random_seed(58)
+set_random_seed(45) ###change3
 
 
 # step 1: build the generator and discriminator models.
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Conv1D, Flatten, LeakyReLU, ReLU, Dropout, BatchNormalization
-from tensorflow.keras import initializers, Input
+from tensorflow.keras.layers import Dense, LeakyReLU, Dropout
 import tensorflow as tf
 
 
-#vanilla DNN
-# def build_generator(latent_space_dim):
-#     model = Sequential()
-#     model.add(Dense(32, input_dim=latent_space_dim))
-#     model.add(LeakyReLU(0.2))
-#     model.add(Dense(32))
-#     model.add(LeakyReLU(0.2))
-#     model.add(Dense(7, activation='tanh'))
-#     return model
+#vanilla DNN  (CIC)
+def build_cic_generator(latent_space_dim, no_of_features):
+    model = Sequential()
+    model.add(Dense(32, input_dim=latent_space_dim))
+    model.add(LeakyReLU(0.2))
+
+    model.add(Dense(32))
+    model.add(LeakyReLU(0.2))
+
+    model.add(Dense(no_of_features, activation='tanh'))
+    return model
 
 
-# def build_discriminator():
-#     model = Sequential()
-#     model.add(Dense(64, input_dim=7))
-#     model.add(LeakyReLU(0.2))
-#     model.add(Dropout(0.2))
+def build_cic_discriminator(no_of_features):
+    model = Sequential()
+    model.add(Dense(64, input_dim=no_of_features))
+    model.add(LeakyReLU(0.2))
+    model.add(Dropout(0.2))
     
-#     model.add(Dense(64))
-#     model.add(LeakyReLU(0.2))
-#     model.add(Dropout(0.2))
-
-#     model.add(Dense(64))
-#     model.add(LeakyReLU(0.2))
-#     model.add(Dropout(0.2))
+    model.add(Dense(64))
+    model.add(LeakyReLU(0.2))
+    model.add(Dropout(0.2))
     
-#     model.add(Dense(1, activation='sigmoid'))
-#     return model
+    model.add(Dense(1, activation='sigmoid'))
+    return model
 
 
-#vanilla DNN 2
-def build_generator(latent_space_dim):
+#vanilla DNN (ORION)
+def build_orion_generator(latent_space_dim, no_of_features):
     model = Sequential()
     model.add(Dense(16, input_dim=latent_space_dim))
     model.add(LeakyReLU(0.2))
@@ -51,17 +68,17 @@ def build_generator(latent_space_dim):
     model.add(Dense(16))
     model.add(LeakyReLU(0.2))
 
-    model.add(Dense(7, activation='tanh'))
+    model.add(Dense(no_of_features, activation='tanh'))
     return model
 
 
-def build_discriminator():
+def build_orion_discriminator(no_of_features):
     model = Sequential()
-    model.add(Dense(64, input_dim=7))
+    model.add(Dense(64, input_dim=no_of_features))
     model.add(LeakyReLU(0.2))
     model.add(Dropout(0.2))
     
-    model.add(Dense(32))
+    model.add(Dense(64))
     model.add(LeakyReLU(0.2))
     model.add(Dropout(0.2))
     
@@ -70,15 +87,23 @@ def build_discriminator():
 
 
 
-batch_size = 32
 latent_space_dim = 128
+no_of_features = 6 ###change1
+batch_size = None
+generator = None
+discriminator = None
 
-generator = build_generator(latent_space_dim)
+if dataset == 'orion1' or dataset == 'orion2':
+    batch_size = 256
+    generator = build_orion_generator(latent_space_dim, no_of_features)
+    discriminator = build_orion_discriminator(no_of_features)
+else:
+    batch_size = 32
+    generator = build_cic_generator(latent_space_dim, no_of_features)
+    discriminator = build_cic_discriminator(no_of_features)
+   
 generator.summary()
-
-discriminator = build_discriminator()
 discriminator.summary()
-
 
 # step 2: setting up training. (We'll redefine the fit method for making a custom training loop for GANs.)
 
@@ -87,12 +112,10 @@ discriminator.summary()
 
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.losses import BinaryCrossentropy
-from tensorflow.keras.models import Model, load_model
+from tensorflow.keras.models import Model
 import tensorflow as tf
 from matplotlib import pyplot as plt
-import numpy as np
 import pandas as pd
-import random
 
 
 
@@ -132,7 +155,7 @@ class OrionGAN(Model):
             y_realfake = tf.concat([y_real, y_fake], axis=0)
             
 
-            # Add some noise to the TRUE outputs (in order to difficult discriminator learning)
+            # Add some noise to the TRUE outputs (in order to difficult discriminator learning) ##
             # noise_real = 0.1*tf.random.uniform(tf.shape(yhat_real))
             # noise_fake = -0.1*tf.random.uniform(tf.shape(yhat_fake))
             # y_realfake += tf.concat([noise_real, noise_fake], axis=0)
@@ -169,7 +192,7 @@ d_opt = Adam(learning_rate=0.00002)
 #d_opt = Adam(learning_rate=0.00001) #generator is gonna learning faster than discriminator cause its task is harder
 g_loss = BinaryCrossentropy()
 d_loss = BinaryCrossentropy()
-epochs = 100
+epochs = 150
 
 gan = OrionGAN(generator, discriminator)
 gan.compile(g_opt, d_opt, g_loss, d_loss, batch_size, latent_space_dim)
@@ -187,16 +210,16 @@ from tensorflow.keras.callbacks import Callback
 #         amount_of_samples_to_generate = 864000 #it will generate 10x the amount-of-seconds-in-a-day samples
         
 #         latent_space = tf.random.normal((amount_of_samples_to_generate, self.latent_space_dim)) 
-#         generated_regular_day = self.model.generator(latent_space, training=False) 
+#         generated_normal_day = self.model.generator(latent_space, training=False) 
 
 
-#         #generated_data = scaler.inverse_transform(generated_regular_day) #scaling data to original range
+#         #generated_data = scaler.inverse_transform(generated_normal_day) #scaling data to original range
 
 #         columns = \
-#             ["timestamp", "bytes", "dst_ip_entropy",  "dst_port_entropy", "src_ip_entropy", "src_port_entropy", "packets"]
+#             ["timestamp", "bits", "dst_ip_entropy",  "dst_port_entropy", "src_ip_entropy", "src_port_entropy", "packets"]
         
 
-#         data_frame = pd.DataFrame(generated_regular_day, columns=columns, index=None)
+#         data_frame = pd.DataFrame(generated_normal_day, columns=columns, index=None)
 #         data_frame = data_frame.round({"timestamp":0}) #making sure the column values are integers.
         
 
@@ -204,8 +227,8 @@ from tensorflow.keras.callbacks import Callback
 #         reduced_data_frame = data_frame.groupby('timestamp', group_keys=False).apply(lambda x: x.sample(60) if x.shape[0] >= 60 else x.sample(frac=1))
 
 
-#         reduced_data_frame.to_csv(f'./generated_data/generated_regular_day_epoch_{epoch}.csv', index=False)
-#         os.system(f'python3 gen_data_visualization.py ./generated_data/generated_regular_day_epoch_{epoch}.csv 1')
+#         reduced_data_frame.to_csv(f'./generated_data/generated_normal_day_epoch_{epoch}.csv', index=False)
+#         os.system(f'python3 gen_data_visualization.py ./generated_data/generated_normal_day_epoch_{epoch}.csv 1')
 
 
 
@@ -214,47 +237,56 @@ from tensorflow.keras.callbacks import Callback
 
 
 ###########################
-# step 3: training GAN.
-hist = gan.fit(regular_day, batch_size=batch_size, epochs=epochs)
-#hist = gan.fit(regular_day, batch_size=batch_size, epochs=epochs, callbacks=[GanMonitor(latent_space_dim, scaler)])
+#step 3: training GAN.
+hist = gan.fit(normal_day, batch_size=batch_size, epochs=epochs)
+#hist = gan.fit(normal_day, batch_size=batch_size, epochs=epochs, callbacks=[GanMonitor(latent_space_dim, scaler)])
 
-plt.suptitle('Loss')
-plt.plot(hist.history['d_loss'], label='d_loss')
-plt.plot(hist.history['g_loss'], label='g_loss')
-plt.legend()
+
+import matplotlib as mpl
+mpl.rcParams['lines.linewidth'] = 1
+plt.plot(hist.history['d_loss'], color='#379237', label='discriminator loss')
+plt.plot(hist.history['g_loss'], color='#FF0303', label='generator loss')
+plt.xlabel('epoch')
+plt.ylabel('loss')
+plt.legend(loc='upper right')
+plt.margins(x=0)
 plt.savefig(f"./gan_loss.png", dpi=150)
 plt.close()
 
 
-# step 4: save models
-generator.save('./model/generator.h5')
-discriminator.save('./model/discriminator.h5')
-
-# step 5: check learned distribution:
-
-#generator = load_model('./model/generator.h5', compile=False)
-
-
-#amount_of_samples_to_generate = 86400 #it will generate the amount-of-seconds-in-a-day samples
-amount_of_samples_to_generate = 3718 #it will generate the amount-of-seconds-in-a-day samples
-
-latent_space = tf.random.normal((amount_of_samples_to_generate, latent_space_dim)) 
-generated_regular_day = generator(latent_space, training=False) 
-generated_regular_day = scaler.inverse_transform(generated_regular_day) #scaling data to original range
-
-
-columns = \
-    ["timestamp", "bytes", "dst_ip_entropy",  "dst_port_entropy", "src_ip_entropy", "src_port_entropy", "packets"]
-
-
-data_frame = pd.DataFrame(generated_regular_day, columns=columns, index=None)
-data_frame = data_frame.round({"timestamp":0}) #making sure the column values are integers.
-
-
-# for each timestamp select one random sample (totalling 86400 samples)
-# data_frame = data_frame.groupby('timestamp', group_keys=False).apply(lambda x: x.sample(1))
+#step 4: save models
+generator.save('./model/generator')
+discriminator.save('./model/discriminator')
 
 
 
-data_frame.to_csv(f'./generated_data/generated_regular_day.csv', index=False)
-os.system(f'python3 gen_data_visualization.py ./generated_data/generated_regular_day.csv 1')
+# step 5: check learned distribution: ###change2
+
+#generator = load_model('./model/generator', compile=False)
+
+# amount_of_samples_to_generate = None
+# if dataset == 'orion1' or dataset == 'orion2':
+#     amount_of_samples_to_generate = 86400 #it will generate the amount-of-seconds-in-a-day samples
+# else:
+#     amount_of_samples_to_generate = 3718 #it will generate the amount-of-seconds-in-a-day samples
+
+# latent_space = tf.random.normal((amount_of_samples_to_generate, latent_space_dim)) 
+# generated_normal_day = generator(latent_space, training=False) 
+# generated_normal_day = scaler.inverse_transform(generated_normal_day) #scaling data to original range
+
+
+# columns = \
+#     ["timestamp", "bits", "dst_ip_entropy",  "dst_port_entropy", "src_ip_entropy", "src_port_entropy", "packets"]
+
+
+# data_frame = pd.DataFrame(generated_normal_day, columns=columns, index=None)
+# data_frame = data_frame.round({"timestamp":0}) #making sure the column values are integers.
+
+
+# # for each timestamp select one random sample (totalling 86400 samples)
+# # data_frame = data_frame.groupby('timestamp', group_keys=False).apply(lambda x: x.sample(1))
+
+
+
+# data_frame.to_csv(f'./generated_data/generated_normal_day.csv', index=False)
+# os.system(f'python3 gen_data_visualization.py ./generated_data/generated_normal_day.csv {dataset}')
