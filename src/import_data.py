@@ -15,17 +15,17 @@ def import_orion_normal_data(dataset=1):
 
 
     #adding timestamp to data... ###change1
-    #( timestamp,bits,dst_ip_entropy,dst_port_entropy,src_ip_entropy,src_port_entropy,packets,label )
-    #this will hopefully help GAN generator understand how the 6 features are distribuited through time.
-    # timestamp = [i for i in range(0,86400)]
-    # timestamp = np.array(timestamp)
-    # timestamp = np.reshape(timestamp, (86400, 1))
-    # regular_day = np.concatenate((timestamp, regular_day), axis=1)
+    # ( timestamp,bits,dst_ip_entropy,dst_port_entropy,src_ip_entropy,src_port_entropy,packets,label )
+    # this will hopefully help GAN generator understand how the 6 features are distribuited through time.
+    timestamp = [i for i in range(0,86400)]
+    timestamp = np.array(timestamp)
+    timestamp = np.reshape(timestamp, (86400, 1))
+    regular_day = np.concatenate((timestamp, regular_day), axis=1)
 
     
     #scaling data... ###change2
-    scaler = MinMaxScaler((-1, 1)).fit(regular_day[:, 0:6]) 
-    regular_day = scaler.transform(regular_day[:, 0:6]) 
+    scaler = MinMaxScaler((-1, 1)).fit(regular_day[:, 0:7]) 
+    regular_day = scaler.transform(regular_day[:, 0:7]) 
 
 
     #saving scaler to disk so that it can be later used for scaling testing data...
@@ -62,10 +62,10 @@ def import_orion_anomalous_data(dataset=1, day=1, portscan=False):
 
     #adding timestamp to data... ###change1
     #( timestamp,bits,dst_ip_entropy,dst_port_entropy,src_ip_entropy,src_port_entropy,packets,label )
-    # timestamp = [i for i in range(0,86400)]
-    # timestamp = np.array(timestamp)
-    # timestamp = np.reshape(timestamp, (86400, 1))
-    # anomalous_day = np.concatenate((timestamp, anomalous_day), axis=1)
+    timestamp = [i for i in range(0,86400)]
+    timestamp = np.array(timestamp)
+    timestamp = np.reshape(timestamp, (86400, 1))
+    anomalous_day = np.concatenate((timestamp, anomalous_day), axis=1)
 
 
     #scaling data...
@@ -74,14 +74,13 @@ def import_orion_anomalous_data(dataset=1, day=1, portscan=False):
     except:
         return None, None
     scaler = load(_file) 
-    anomalous_day = scaler.transform(anomalous_day[:, 0:6]) ###change2
+    anomalous_day = scaler.transform(anomalous_day[:, 0:7]) ###change2
 
 
     if not portscan:
         if dataset == 1:  #access 2020
             if day == 1:
                 # 1st interval (ddos): 36900-41400  
-                normal_day, scaler = import_orion_normal_data(dataset=1)
                 # 2nd interval (portscan): 48300-52500
                 anomalous_day = np.concatenate((anomalous_day[0:48300, :], anomalous_day[52501:, :]), axis=0)
                 labels = np.concatenate((labels[0:48300], labels[52501:]), axis=0)

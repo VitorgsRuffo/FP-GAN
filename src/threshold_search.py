@@ -51,12 +51,13 @@ plt.plot(x, normal_predictions, color='#205295')
 
 y1 = [normal_mean] * normal_predictions.shape[0]
 mpl.rcParams['lines.linewidth'] = 1.5
-plt.plot(x, y1, '-g', label=f"mean: {round(normal_mean, 4)}")
+plt.plot(x, y1, '-g', label=f"média: {round(normal_mean, 4)}")
 
-plt.xlabel('second')
-plt.ylabel('prediction')
+plt.xlabel('segundo')
+plt.ylabel('saída do discriminador')
 #plt.yticks(np.arange(round(normal_mean, 2)-0.05, 0.55, step=0.02))
-#plt.ylim((normal_mean-0.05, 0.55))
+plt.yticks(np.arange(0.48, 0.51, step=0.01))
+plt.ylim((0.48, 0.51))
 plt.legend(loc='upper right')
 plt.margins(x=0)
 plt.savefig(f"./th_disc_normal_pred.png", dpi=800)
@@ -67,14 +68,14 @@ plt.close()
 # Step 2: predict anomalous danomalous_day, labels = import_orion_anomalous_datata discriminating score
 anomalous_predictions = discriminator.predict(anomalous_day)
 
-mpl.rcParams['lines.linewidth'] = 0.6
-plt.plot([i for i in range(0, anomalous_predictions.shape[0])], anomalous_predictions, color='#205295', label=f"Mean={normal_mean}")
-plt.xlabel('second')
-plt.ylabel('prediction')
-plt.legend(loc=1)
-plt.margins(x=0)
-plt.savefig(f"./th_disc_anomalous_pred.png", dpi=800)
-plt.close()
+# mpl.rcParams['lines.linewidth'] = 0.6
+# plt.plot([i for i in range(0, anomalous_predictions.shape[0])], anomalous_predictions, color='#205295', label=f"Mean={normal_mean}")
+# plt.xlabel('second')
+# plt.ylabel('prediction')
+# plt.legend(loc=1)
+# plt.margins(x=0)
+# plt.savefig(f"./th_disc_anomalous_pred.png", dpi=800)
+# plt.close()
 
 
 # Step 3: calculate distance between the scores and normal data mean

@@ -23,7 +23,7 @@ from utils import plot_prediction_real_graph
 #
 ## Passo 1, Carregar o modelo treinado e o threshold ideal...
 #
-model = load_model('gru')
+model = load_model('./model')
 
 _file = open('threshold.pkl', 'rb')
 threshold = load(_file)
@@ -38,7 +38,7 @@ portscan = False
 
 
 anomalous_data_2_x, anomalous_data_2_y,\
-anomalous_data_2_labels = import_orion_anomalous_windowed_data(dataset=1, day=2, portscan=portscan, window_size=window_size)
+anomalous_data_2_labels, scaler = import_orion_anomalous_windowed_data(dataset=1, day=2, portscan=portscan, window_size=window_size)
 
 
 
@@ -56,14 +56,9 @@ prediction = model.predict(anomalous_data_2_x) # shape: (86395, 6)
 # conseguindo realizar previsões proximas da realidade.
 #
 
-if portscan:
-    plot_prediction_real_graph("Prediction-real graph:\n171218_portscan_ddos", 
-                            "./171218_portscan_ddos_prediction_real_graph.jpg",
-                            prediction, anomalous_data_2_y, [('09:45:00', '11:10:00'), ('17:37:00', '18:55:00')], window_size)
-else:
-    plot_prediction_real_graph("Prediction-real graph:\n171218_portscan_ddos", 
-                           "./171218_portscan_ddos_prediction_real_graph.jpg",
-                           prediction, anomalous_data_2_y, [('17:37:00', '18:55:00')], window_size)
+plot_prediction_real_graph("Prediction-real graph:\n171218_portscan_ddos", 
+                           "./171218_portscan_ddos_prediction_real_graph.jpg", '3',
+                           prediction, anomalous_data_2_y, scaler, window_size)
 
 
 #

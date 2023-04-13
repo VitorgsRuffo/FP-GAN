@@ -45,9 +45,15 @@ _file = open('threshold.pkl', 'rb')
 threshold = load(_file)
 
 
+
+
 # step 3: make predictions on unseen traffic data
 predictions = discriminator.predict(anomalous_day)
 
+
+#plotting predictions
+import locale
+plt.rcParams['axes.formatter.use_locale'] = True
 
 
 x = [i for i in range(0, predictions.shape[0])]
@@ -57,11 +63,11 @@ plt.plot(x, predictions, color='#205295')
 
 y1 = [threshold['nmean']] * predictions.shape[0]
 mpl.rcParams['lines.linewidth'] = 1.5
-plt.plot(x, y1, '-g', label=f"mean: {round(threshold['nmean'], 4)}")
+plt.plot(x, y1, '-g', label=f"média: {round(threshold['nmean'], 4)}")
 
 
 y2 = [threshold['nmean'] + threshold['th']] * predictions.shape[0]
-plt.plot(x, y2, ':r', label=f"threshold: {round(threshold['th'], 4)}")
+plt.plot(x, y2, ':r', label=f"limiar: {round(threshold['th'], 4)}")
 
 
 plt.fill_between(
@@ -72,11 +78,34 @@ plt.fill_between(
         alpha= 0.3)
 
 
-plt.xlabel('second')
-plt.ylabel('prediction')
+li = list(labels)
+start = li.index(1)
+end = start + (li.count(1)-1) 
+plt.plot(x[start:end], predictions[start:end], color='darkred')
+plt.fill_between(
+    x[start:end], 
+    list(predictions[start:end].reshape(-1)),
+    0.40,
+    color= "r",
+    alpha= 0.2,
+    label="Intervalo anômalo")
+
+
+
+locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+import matplotlib.ticker as tkr
+def func(x, pos):  # formatter function takes tick label and tick position
+    return locale.format_string("%.2f", x)
+axis_format = tkr.FuncFormatter(func)  # make formatter
+
+plt.xlabel('segundo')
+plt.ylabel('saída do descriminador')
 #plt.yticks(np.arange(round(threshold['nmean'], 2)-0.05, 0.65, step=0.02))
-#plt.ylim((threshold['nmean']-0.05, 0.65))
-plt.legend(loc='upper right')
+plt.ylim((0.44, 0.54))
+ax = plt.gca()
+ax.yaxis.set_major_formatter(axis_format) #when using ','
+
+plt.legend(loc='upper left')
 plt.margins(x=0)
 plt.savefig(f"./disc_pred.png", dpi=800)
 plt.close()

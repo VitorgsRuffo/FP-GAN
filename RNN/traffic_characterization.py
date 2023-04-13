@@ -29,11 +29,11 @@ portscan = False
 
 no_of_features = 6 #numero de colunas (caracteristicas ou features) dos dados de entrada.
 
-normal_data_x, normal_data_y = import_orion_normal_windowed_data(dataset=1, window_size=window_size)
+normal_data_x, normal_data_y, scaler = import_orion_normal_windowed_data(dataset=1, window_size=window_size)
 
 
 anomalous_data_1_x, anomalous_data_1_y,\
-anomalous_data_1_labels = import_orion_anomalous_windowed_data(dataset=1, day=1, portscan=portscan, window_size=window_size)
+anomalous_data_1_labels, _ = import_orion_anomalous_windowed_data(dataset=1, day=1, portscan=portscan, window_size=window_size)
 
 
 
@@ -54,7 +54,7 @@ def build_model(window_size, no_of_features):
     model.add(Dense(24))
     model.add(LeakyReLU(0.2))
     model.add(Dropout(0.2))
-    model.add(Dense(no_of_features, activation='tanh'))
+    model.add(Dense(no_of_features, activation=None))
     return model
 
 
@@ -69,22 +69,60 @@ model.summary()
 
 
 # 2.2 treinando o modelo:
-model.fit(
-    x=normal_data_x,
-    y=normal_data_y,
-    #dados de validação são importantes para verificar a performance do modelo
-    #para dados desconhecidos ao longo do treinamento. São uteis para 
-    #ajustar o hiperparametros! 
-    #validation_data=(x, y), 
-    batch_size=batch_size,
-    epochs=epochs
-)
+# hist = model.fit(
+#     x=normal_data_x,
+#     y=normal_data_y,
+#     #dados de validação são importantes para verificar a performance do modelo
+#     #para dados desconhecidos ao longo do treinamento. São uteis para 
+#     #ajustar o hiperparametros! 
+#     #validation_data=(x, y), 
+#     batch_size=batch_size,
+#     epochs=epochs
+# )
+
+# #plotting loss
+# import matplotlib.pyplot as plt
+# import matplotlib as mpl
+# import locale
+# plt.rcParams['axes.formatter.use_locale'] = True
+
+# plt.plot(hist.history['loss'], color='#379237')
 
 
-# 2.3 salvando o modelo treinado no disco...
-model.save('./model')
+# locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+# import matplotlib.ticker as tkr
+# def func(x, pos):  # formatter function takes tick label and tick position
+#     return locale.format_string("%.2f", x)
+# axis_format = tkr.FuncFormatter(func)  # make formatter
 
-#model = load_model('./model')
+# mpl.rcParams['lines.linewidth'] = 1
+
+# plt.xlabel('Época')
+# plt.ylabel('Erro')
+# ax = plt.gca()
+
+# from matplotlib.ticker import MaxNLocator
+# ax.xaxis.set_major_locator(MaxNLocator(integer=True)) 
+# ax.yaxis.set_major_formatter(axis_format) #when using ','
+
+# import numpy as np
+# plt.yticks(np.arange(0.30, 0.50, step=0.02))
+
+# plt.margins(x=0)
+# plt.savefig(f"./loss.png", dpi=150)
+# plt.close()
+
+
+# # 2.3 salvando o modelo treinado no disco...
+# model.save('./model')
+
+model = load_model('./model')
+
+#check baseline learning:
+prediction = model.predict(normal_data_x) # shape: (86380, 6)
+plot_prediction_real_graph("Prediction-real graph:\n051218", 
+                            "./051218_prediction_real_graph.jpg", '1',
+                            prediction, normal_data_y, scaler, window_size)
 
 
 #
@@ -104,15 +142,10 @@ prediction = model.predict(anomalous_data_1_x) # shape: (86380, 6)
 # Assim, podemos vizualizar se a caracterização do modelo esta boa. Isto é, se ele aprendeu o comportamento 
 # do tráfego e esta conseguindo realizar previsões proximas da realidade.
 
-if portscan:
-    plot_prediction_real_graph("Prediction-real graph:\n051218_ddos_portscan", 
-                            "./051218_ddos_portscan_prediction_real_graph.jpg",
-                            prediction, anomalous_data_1_y, [('10:15:00', '11:30:00'), ('13:25:00', '14:35:00')], window_size)
 
-else:
-    plot_prediction_real_graph("Prediction-real graph:\n051218_ddos_portscan", 
-                            "./051218_ddos_portscan_prediction_real_graph.jpg",
-                            prediction, anomalous_data_1_y, [('10:15:00', '11:30:00')], window_size)
+plot_prediction_real_graph("Prediction-real graph:\n051218_ddos_portscan", 
+                           "./051218_ddos_portscan_prediction_real_graph.jpg", '2',
+                           prediction, anomalous_data_1_y, scaler, window_size)
 
 
 

@@ -22,12 +22,12 @@ else:
 
 #setting random state for reproducible results.
 from tensorflow.keras.utils import set_random_seed
-#set_random_seed(58)
-set_random_seed(45) ###change3
+set_random_seed(58)
+#set_random_seed(45) ###change3
 
 
 # step 1: build the generator and discriminator models.
-from tensorflow.keras.models import Sequential
+from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import Dense, LeakyReLU, Dropout
 import tensorflow as tf
 
@@ -88,7 +88,8 @@ def build_orion_discriminator(no_of_features):
 
 
 latent_space_dim = 128
-no_of_features = 6 ###change1
+no_of_features = 7 
+#no_of_features = 6 ###change1
 batch_size = None
 generator = None
 discriminator = None
@@ -192,7 +193,7 @@ d_opt = Adam(learning_rate=0.00002)
 #d_opt = Adam(learning_rate=0.00001) #generator is gonna learning faster than discriminator cause its task is harder
 g_loss = BinaryCrossentropy()
 d_loss = BinaryCrossentropy()
-epochs = 150
+epochs = 20
 
 gan = OrionGAN(generator, discriminator)
 gan.compile(g_opt, d_opt, g_loss, d_loss, batch_size, latent_space_dim)
@@ -243,11 +244,35 @@ hist = gan.fit(normal_day, batch_size=batch_size, epochs=epochs)
 
 
 import matplotlib as mpl
+
+#axis format configuration:
+
+import locale
+plt.rcParams['axes.formatter.use_locale'] = True
+
+plt.plot(hist.history['d_loss'], color='#379237', label='Erro do discriminator')
+plt.plot(hist.history['g_loss'], color='#FF0303', label='Erro do generator')
+
+
+locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+import matplotlib.ticker as tkr
+def func(x, pos):  # formatter function takes tick label and tick position
+    return locale.format_string("%.2f", x)
+axis_format = tkr.FuncFormatter(func)  # make formatter
+
 mpl.rcParams['lines.linewidth'] = 1
-plt.plot(hist.history['d_loss'], color='#379237', label='discriminator loss')
-plt.plot(hist.history['g_loss'], color='#FF0303', label='generator loss')
-plt.xlabel('epoch')
-plt.ylabel('loss')
+
+plt.xlabel('Época')
+plt.ylabel('Erro')
+ax = plt.gca()
+
+from matplotlib.ticker import MaxNLocator
+ax.xaxis.set_major_locator(MaxNLocator(integer=True)) 
+ax.yaxis.set_major_formatter(axis_format) #when using ','
+
+import numpy as np
+plt.yticks(np.arange(0.50, 0.90, step=0.05))
+
 plt.legend(loc='upper right')
 plt.margins(x=0)
 plt.savefig(f"./gan_loss.png", dpi=150)
@@ -264,29 +289,30 @@ discriminator.save('./model/discriminator')
 
 #generator = load_model('./model/generator', compile=False)
 
-# amount_of_samples_to_generate = None
-# if dataset == 'orion1' or dataset == 'orion2':
-#     amount_of_samples_to_generate = 86400 #it will generate the amount-of-seconds-in-a-day samples
-# else:
-#     amount_of_samples_to_generate = 3718 #it will generate the amount-of-seconds-in-a-day samples
+amount_of_samples_to_generate = None
+if dataset == 'orion1' or dataset == 'orion2':
+    amount_of_samples_to_generate = 1000000 #it will generate the amount-of-seconds-in-a-day samples
+else:
+    amount_of_samples_to_generate = 3718 #it will generate the amount-of-seconds-in-a-day samples
 
-# latent_space = tf.random.normal((amount_of_samples_to_generate, latent_space_dim)) 
-# generated_normal_day = generator(latent_space, training=False) 
-# generated_normal_day = scaler.inverse_transform(generated_normal_day) #scaling data to original range
-
-
-# columns = \
-#     ["timestamp", "bits", "dst_ip_entropy",  "dst_port_entropy", "src_ip_entropy", "src_port_entropy", "packets"]
+latent_space = tf.random.normal((amount_of_samples_to_generate, latent_space_dim)) 
+generated_normal_day = generator(latent_space, training=False) 
+generated_normal_day = scaler.inverse_transform(generated_normal_day) #scaling data to original range
 
 
-# data_frame = pd.DataFrame(generated_normal_day, columns=columns, index=None)
-# data_frame = data_frame.round({"timestamp":0}) #making sure the column values are integers.
+columns = ["timestamp", "bits", "dst_ip_entropy",  "dst_port_entropy", "src_ip_entropy", "src_port_entropy", "packets"]
+# ["bits", "dst_ip_entropy",  "dst_port_entropy", "src_ip_entropy", "src_port_entropy", "packets"]
+
+data_frame = pd.DataFrame(generated_normal_day, columns=columns, index=None)
+
+data_frame = data_frame.round({"timestamp":0}) #making sure the column values are integers.
+
+# for each timestamp select one random sample (totalling 86400 samples)
+data_frame = data_frame.groupby('timestamp', group_keys=False).apply(lambda x: x.sample(1))
+indices = data_frame['timestamp'].isin(range(0,86400))
+data_frame = data_frame[indices]
 
 
-# # for each timestamp select one random sample (totalling 86400 samples)
-# # data_frame = data_frame.groupby('timestamp', group_keys=False).apply(lambda x: x.sample(1))
 
-
-
-# data_frame.to_csv(f'./generated_data/generated_normal_day.csv', index=False)
-# os.system(f'python3 gen_data_visualization.py ./generated_data/generated_normal_day.csv {dataset}')
+data_frame.to_csv(f'./generated_data/generated_normal_day.csv', index=False)
+os.system(f'python3 gen_data_visualization.py ./generated_data/generated_normal_day.csv {dataset}')

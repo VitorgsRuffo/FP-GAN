@@ -39,7 +39,7 @@ def import_orion_normal_windowed_data(dataset=1, window_size=5):
 
 
     #returning data...
-    return regular_day_x, regular_day_y
+    return regular_day_x, regular_day_y, scaler
 
 #_, _ = import_orion_normal_windowed_data()
 
@@ -118,6 +118,6 @@ def import_orion_anomalous_windowed_data(dataset=1, day=1, portscan=False, windo
     labels = labels[window_size:]
 
     #returning data...
-    return anomalous_day_x, anomalous_day_y, labels 
+    return anomalous_day_x, anomalous_day_y, labels, scaler
 
 #_, _, _ = import_orion_anomalous_windowed_data()
