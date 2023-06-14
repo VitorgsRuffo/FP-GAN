@@ -78,7 +78,7 @@ def plot_prediction_real_graph(graph_name: str, save_path: str, day, predicted_d
         plots[i][j].step(lin_space, real, label='Tráfego real', color='darkgreen')
         
         pred = np.array(predicted_data[features_names[k]])
-        plots[i][j].step(lin_space, pred, label='Tráfego previsto', color='orange', alpha=0.8)
+        plots[i][j].step(lin_space, pred, label='Tráfego previsto', color='orange', alpha=0.9)
 
 
         plots[i][j].set_xticks(np.arange(0, 25, 2))
@@ -102,7 +102,7 @@ def plot_prediction_real_graph(graph_name: str, save_path: str, day, predicted_d
             end = end - portscan_duration
             
             start, end = lin_space[start], lin_space[end]
-            plots[i][j].axvspan(start, end, label="Intervalo anômalo", color='r', alpha=0.4)
+            plots[i][j].axvspan(start, end, label="Intervalo anômalo", color='r', alpha=0.25)
             #plots[i][j].step(lin_space[start:end], real[start:end], color='darkred')
             # plots[i][j].fill_between(
             #     lin_space[start:end], 
@@ -123,7 +123,7 @@ def plot_prediction_real_graph(graph_name: str, save_path: str, day, predicted_d
                 # color= "r",
                 # alpha= 0.2)  
                 start, end = lin_space[start], lin_space[end]
-                plots[i][j].axvspan(start, end, label="Intervalo anômalo", color='r', alpha=0.4)
+                plots[i][j].axvspan(start, end, label="Intervalo anômalo", color='r', alpha=0.25)
 
         if k == 0:
             plots[i][j].set_ylim([0, 250000])

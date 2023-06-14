@@ -15,7 +15,7 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import matthews_corrcoef
 import matplotlib.pyplot as plt
-from pickle import load
+from pickle import dump, load
 from import_data import import_orion_normal_windowed_data, import_orion_anomalous_windowed_data
 from utils import plot_prediction_real_graph
 
@@ -107,11 +107,28 @@ print(f"\nF1-score: {f1_score(anomalous_data_2_labels, predicted_labels)}")
 print(f"\nMatthews Correlation Coefficient (MCC): {matthews_corrcoef(anomalous_data_2_labels, predicted_labels)}")
 
 #ROC curve:
-fpr, tpr, _ = metrics.roc_curve(anomalous_data_2_labels,  predicted_labels)
-auc = metrics.roc_auc_score(anomalous_data_2_labels, predicted_labels)
-plt.plot(fpr,tpr,label="AUC="+str(auc))
-plt.ylabel('True Positive Rate')
-plt.xlabel('False Positive Rate')
+from sklearn.preprocessing import MinMaxScaler
+import matplotlib as mpl
+scaler = MinMaxScaler((0, 1)).fit(abs_error.reshape(-1, 1)) 
+normalized_abs_error = scaler.transform(abs_error.reshape(-1, 1))
+mpl.rcParams['lines.linewidth'] = 1
+
+_file = open('gru_normalized_raw_predictions.pkl', 'wb')
+dump(normalized_abs_error, _file)
+_file.close()
+
+_file = open('labels.pkl', 'wb')
+dump(anomalous_data_2_labels, _file)
+_file.close()
+
+fpr, tpr, _ = metrics.roc_curve(anomalous_data_2_labels,  normalized_abs_error)
+auc = metrics.roc_auc_score(anomalous_data_2_labels, normalized_abs_error)
+plt.plot(fpr,tpr,label="NIDS-GRU\n(AUROC="+str(round(auc, 4)).replace('.', ',')+")", color="#0066CC")
+x = np.linspace(0, 1, 50)
+plt.plot(x,x,linestyle='dashed', label="Classificador aleatório\n(AUROC=0,5000)", color="black")
+
+plt.ylabel('True Positive Rate (Recall)')
+plt.xlabel('False Positive Rate (FPR)')
 plt.legend(loc=4)
-plt.show()
+plt.savefig("./roc_gru.jpg", format='jpg', dpi=800)
 plt.close()

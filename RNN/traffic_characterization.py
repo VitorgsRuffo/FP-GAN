@@ -47,8 +47,8 @@ anomalous_data_1_labels, _ = import_orion_anomalous_windowed_data(dataset=1, day
 def build_model(window_size, no_of_features):
     model = Sequential()
     model.add(Input(shape=(window_size, no_of_features)))
-    model.add(GRU(32)) 
-    #model.add(LSTM(32)) 
+    #model.add(GRU(32)) 
+    model.add(LSTM(32)) 
     model.add(LeakyReLU(0.2))
     model.add(Dropout(0.2))
     model.add(Dense(24))
@@ -69,54 +69,54 @@ model.summary()
 
 
 # 2.2 treinando o modelo:
-# hist = model.fit(
-#     x=normal_data_x,
-#     y=normal_data_y,
-#     #dados de validação são importantes para verificar a performance do modelo
-#     #para dados desconhecidos ao longo do treinamento. São uteis para 
-#     #ajustar o hiperparametros! 
-#     #validation_data=(x, y), 
-#     batch_size=batch_size,
-#     epochs=epochs
-# )
+hist = model.fit(
+    x=normal_data_x,
+    y=normal_data_y,
+    #dados de validação são importantes para verificar a performance do modelo
+    #para dados desconhecidos ao longo do treinamento. São uteis para 
+    #ajustar o hiperparametros! 
+    #validation_data=(x, y), 
+    batch_size=batch_size,
+    epochs=epochs
+)
 
-# #plotting loss
-# import matplotlib.pyplot as plt
-# import matplotlib as mpl
-# import locale
-# plt.rcParams['axes.formatter.use_locale'] = True
+#plotting loss
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+import locale
+plt.rcParams['axes.formatter.use_locale'] = True
 
-# plt.plot(hist.history['loss'], color='#379237')
-
-
-# locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
-# import matplotlib.ticker as tkr
-# def func(x, pos):  # formatter function takes tick label and tick position
-#     return locale.format_string("%.2f", x)
-# axis_format = tkr.FuncFormatter(func)  # make formatter
-
-# mpl.rcParams['lines.linewidth'] = 1
-
-# plt.xlabel('Época')
-# plt.ylabel('Erro')
-# ax = plt.gca()
-
-# from matplotlib.ticker import MaxNLocator
-# ax.xaxis.set_major_locator(MaxNLocator(integer=True)) 
-# ax.yaxis.set_major_formatter(axis_format) #when using ','
-
-# import numpy as np
-# plt.yticks(np.arange(0.30, 0.50, step=0.02))
-
-# plt.margins(x=0)
-# plt.savefig(f"./loss.png", dpi=150)
-# plt.close()
+plt.plot(hist.history['loss'], color='#379237')
 
 
-# # 2.3 salvando o modelo treinado no disco...
-# model.save('./model')
+locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+import matplotlib.ticker as tkr
+def func(x, pos):  # formatter function takes tick label and tick position
+    return locale.format_string("%.2f", x)
+axis_format = tkr.FuncFormatter(func)  # make formatter
 
-model = load_model('./model')
+mpl.rcParams['lines.linewidth'] = 1
+
+plt.xlabel('Época')
+plt.ylabel('Erro')
+ax = plt.gca()
+
+from matplotlib.ticker import MaxNLocator
+ax.xaxis.set_major_locator(MaxNLocator(integer=True)) 
+ax.yaxis.set_major_formatter(axis_format) #when using ','
+
+import numpy as np
+plt.yticks(np.arange(0.26, 0.46, step=0.02))
+
+plt.margins(x=0)
+plt.savefig(f"./loss.png", dpi=150)
+plt.close()
+
+
+#2.3 salvando o modelo treinado no disco...
+model.save('./model')
+
+#model = load_model('./model')
 
 #check baseline learning:
 prediction = model.predict(normal_data_x) # shape: (86380, 6)
@@ -199,6 +199,7 @@ for threshold in interval:
         best_mcc = mcc
         best_threshold = threshold
 print('\n\nBest threshold: ', best_threshold)
+print('\n\nMCC: ', best_mcc)
 
 
 #3.4 salvando no disco o threshold encontrado ...

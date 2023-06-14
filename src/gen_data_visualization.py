@@ -94,7 +94,7 @@ for k in range(0, 6):
     plots[i][j].step(np.linspace(0, 24, 86400), original_features, color='darkgreen', label='Distribuição original')
 
     gen_features = np.array(gen_data[features_names[k]])
-    plots[i][j].step(lin_space, gen_features, color='orange', label='Distribuição aprendida', alpha=0.65)
+    plots[i][j].step(lin_space, gen_features, color='orange', label='Distribuição aprendida', alpha=0.55)
    
     plots[i][j].set_xticks(np.arange(0, 25, 2))
 

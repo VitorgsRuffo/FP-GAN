@@ -46,18 +46,32 @@ normal_mean = np.mean(normal_predictions, dtype = np.float64, axis=0)
 normal_mean = normal_mean[0]
 #std_dev = np.std(normal_predictions, dtype = np.float64, axis=0)
 
+import locale
+plt.rcParams['axes.formatter.use_locale'] = True
+
 x = [i for i in range(0, normal_predictions.shape[0])]
-plt.plot(x, normal_predictions, color='#205295')
+plt.plot(x, normal_predictions, color='darkgreen')
 
 y1 = [normal_mean] * normal_predictions.shape[0]
 mpl.rcParams['lines.linewidth'] = 1.5
-plt.plot(x, y1, '-g', label=f"média: {round(normal_mean, 4)}")
+plt.plot(x, y1, color="darkorange", linestyle="solid", label=f"média: {round(normal_mean, 4)}".replace(".", ","))
+
+
+locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+import matplotlib.ticker as tkr
+def func(x, pos):  # formatter function takes tick label and tick position
+    return locale.format_string("%.2f", x)
+axis_format = tkr.FuncFormatter(func)  # make formatter
 
 plt.xlabel('segundo')
 plt.ylabel('saída do discriminador')
 #plt.yticks(np.arange(round(normal_mean, 2)-0.05, 0.55, step=0.02))
-plt.yticks(np.arange(0.48, 0.51, step=0.01))
-plt.ylim((0.48, 0.51))
+#plt.yticks(np.arange(0.48, 0.51, step=0.01))
+#plt.ylim((0.48, 0.51))
+
+ax = plt.gca()
+ax.yaxis.set_major_formatter(axis_format) #when using ','
+
 plt.legend(loc='upper right')
 plt.margins(x=0)
 plt.savefig(f"./th_disc_normal_pred.png", dpi=800)

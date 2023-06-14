@@ -250,8 +250,8 @@ import matplotlib as mpl
 import locale
 plt.rcParams['axes.formatter.use_locale'] = True
 
-plt.plot(hist.history['d_loss'], color='#379237', label='Erro do discriminator')
-plt.plot(hist.history['g_loss'], color='#FF0303', label='Erro do generator')
+plt.plot(hist.history['d_loss'], color='darkgreen', label='Discriminador')
+plt.plot(hist.history['g_loss'], color='orange', label='Gerador')
 
 
 locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
